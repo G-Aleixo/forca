@@ -1,8 +1,8 @@
-import socket, threading
+import socket, threading, pickle
 
 class Server:
     def __init__(self, answer: str, max_clients: int, address: str, port: int) -> None:
-        self.answer = answer
+        self.answer = answer.lower()
         self.max_clients = max_clients
         
         self.guessed = []
@@ -21,6 +21,8 @@ class Server:
         threading.Thread(target=self.handle_clients, args=(client_socket,)).start()
         
     def handle_clients(self, client_socket: socket.socket):
+        client_socket.send(bytes(len(self.answer)))
+        
         guess = ""
         
         while True:
@@ -32,6 +34,11 @@ class Server:
                     client_socket.send("repeated".encode())
                 elif guess[0].lower() in self.answer:
                     client_socket.send("correct".encode())
+                    positions = []
+                    for i in range(len(self.answer)):
+                        if self.answer[i].lower() == guess[0].lower():
+                            positions.append(i)
+                    client_socket.send(pickle.dumps(positions))
                 else:
                     client_socket.send("incorrect".encode())
             elif typ == "1":
